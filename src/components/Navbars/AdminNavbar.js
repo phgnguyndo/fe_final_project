@@ -15,7 +15,7 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 // reactstrap components
 import {
   DropdownMenu,
@@ -33,8 +33,30 @@ import {
   Container,
   Media,
 } from "reactstrap";
+import Cookies from 'js-cookie';
+import { logout } from '../../api/authApi';
 
 const AdminNavbar = (props) => {
+  // Lấy thông tin người dùng từ localStorage
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const fullName = user.full_name || 'Guest';
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // Gọi API đăng xuất
+      await logout();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    } finally {
+      // Xóa access_token từ cookie và user từ localStorage
+      Cookies.remove('access_token');
+      localStorage.removeItem('user');
+      // Chuyển hướng về trang đăng nhập
+      navigate('/auth/login');
+    }
+  };
+
   return (
     <>
       <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main">
@@ -69,7 +91,7 @@ const AdminNavbar = (props) => {
                   </span>
                   <Media className="ml-2 d-none d-lg-block">
                     <span className="mb-0 text-sm font-weight-bold">
-                      Jessica Jones
+                      {fullName}
                     </span>
                   </Media>
                 </Media>
@@ -95,7 +117,7 @@ const AdminNavbar = (props) => {
                   <span>Support</span>
                 </DropdownItem>
                 <DropdownItem divider />
-                <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
+                <DropdownItem onClick={handleLogout}>
                   <i className="ni ni-user-run" />
                   <span>Logout</span>
                 </DropdownItem>
