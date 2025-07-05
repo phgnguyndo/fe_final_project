@@ -18,6 +18,7 @@
 import Index from "views/Index.js";
 import Tables from "views/examples/Tables.js";
 import Upload from "views/examples/Upload.js";
+import RealtimeMonitoring from "./views/examples/RealtimeMonitoring";
 // import Profile from "views/examples/Profile.js";
 // import Maps from "views/examples/Maps.js";
 // import Register from "views/examples/Register.js";
@@ -79,6 +80,13 @@ var routes = [
     name: "Upload PCAP",
     icon: "ni ni-cloud-upload-96 text-primary",
     component: <Upload/>,
+    layout: "/admin",
+  },
+  {
+    path: "/admin/realtime",
+    name: "Realtime Monitoring",
+    icon: "ni ni-chart-bar-32 text-primary",
+    component: <RealtimeMonitoring/>,
     layout: "/admin",
   },
 ];
