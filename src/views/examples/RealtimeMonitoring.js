@@ -1,22 +1,3 @@
-/*!
-
-=========================================================
-* Argon Dashboard React - v1.2.4
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/argon-dashboard-react
-* Copyright 2024 Creative Tim (https://www.creative-tim.com)
-* Licensed under MIT (https://github.com/creativetimofficial/argon-dashboard-react/blob/master/LICENSE.md)
-
-* Coded by Creative Tim
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
-// reactstrap components
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -26,11 +7,9 @@ import {
   Row,
   Col,
   Alert,
-  CardTitle, // Thêm dòng này
+  CardTitle,
 } from "reactstrap";
-// react plugin for charts
 import { Line, Bar } from "react-chartjs-2";
-// chart options
 import { chartOptions } from "variables/charts.js";
 import io from "socket.io-client";
 
@@ -45,78 +24,99 @@ const RealtimeMonitoring = () => {
     mse_values: [],
     flow_pkts_s_history: [],
     flow_byts_s_history: [],
+    attack_history: [],
   });
   const [alertData, setAlertData] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
 
   useEffect(() => {
-    // Kết nối WebSocket (thay 'http://localhost:5000' bằng URL backend của bạn)
-    const socket = io("http://localhost:5000");
+    const socket = io("http://192.168.11.132:5000");
 
     socket.on("connect", () => {
       setSocketConnected(true);
       console.log("Connected to WebSocket server");
     });
 
+    socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      setSocketConnected(false);
+    });
+
     socket.on("realtime_data", (data) => {
       setRealtimeData({
-        flow_pkts_s: data.flow_pkts_s,
-        flow_byts_s: data.flow_byts_s,
-        tot_fwd_pkts: data.tot_fwd_pkts,
-        tot_bwd_pkts: data.tot_bwd_pkts,
-        max_mse: data.max_mse,
-        abnormal_percentage: data.abnormal_percentage,
-        mse_values: data.mse_values,
-        flow_pkts_s_history: data.flow_pkts_s_history,
-        flow_byts_s_history: data.flow_byts_s_history,
+        flow_pkts_s: data.flow_pkts_s || 0,
+        flow_byts_s: data.flow_byts_s || 0,
+        tot_fwd_pkts: data.tot_fwd_pkts || 0,
+        tot_bwd_pkts: data.tot_bwd_pkts || 0,
+        max_mse: data.max_mse || 0,
+        abnormal_percentage: data.abnormal_percentage || 0,
+        mse_values: data.mse_values || [],
+        flow_pkts_s_history: data.flow_pkts_s_history || [],
+        flow_byts_s_history: data.flow_byts_s_history || [],
+        attack_history: data.attack_history || [],
       });
+      if (!data.is_anomaly) {
+        setAlertData(null);
+      }
     });
 
     socket.on("alert", (data) => {
       setAlertData(data);
+      setTimeout(() => {
+        setAlertData((current) => (current === data ? null : current));
+      }, 30000);
     });
 
     socket.on("disconnect", () => {
       setSocketConnected(false);
       console.log("Disconnected from WebSocket server");
+      setAlertData(null);
     });
 
-    // Cleanup khi component unmount
     return () => {
       socket.disconnect();
     };
   }, []);
 
-  // Dữ liệu cho biểu đồ Line (mse_values)
+  // Dữ liệu cho biểu đồ Line (mse_values) với đường ngưỡng
   const mseChartData = {
-    labels: realtimeData.mse_values.map((_, index) => `Point ${index + 1}`),
+    labels: realtimeData.mse_values?.map((_, index) => `Point ${index + 1}`) || [],
     datasets: [
       {
         label: "MSE Values",
-        data: realtimeData.mse_values,
+        data: realtimeData.mse_values || [],
         fill: false,
         borderColor: "#5e72e4",
         borderWidth: 2,
-        tension: 0.6, // Tạo đường cong mượt mà
-        pointRadius: 0, // Loại bỏ các chấm
+        tension: 0.6,
+        pointRadius: 0,
+      },
+      {
+        label: "Threshold",
+        data: Array(realtimeData.mse_values?.length).fill(0.5),
+        fill: false,
+        borderColor: "#ff0000",
+        borderWidth: 2,
+        borderDash: [5, 5],
+        pointRadius: 0,
       },
     ],
   };
 
   // Dữ liệu cho biểu đồ Bar (flow_pkts_s và flow_byts_s history)
   const trafficChartData = {
-    labels: realtimeData.flow_pkts_s_history.map((_, index) => `T${index + 1}`),
+    labels: realtimeData.flow_pkts_s_history?.map((_, index) => `T${index + 1}`) || [],
     datasets: [
       {
         label: "Packets/s",
-        data: realtimeData.flow_pkts_s_history,
+        data: realtimeData.flow_pkts_s_history || [],
         backgroundColor: "#2dce89",
         borderColor: "#2dce89",
         borderWidth: 1,
       },
       {
         label: "Bytes/s",
-        data: realtimeData.flow_byts_s_history,
+        data: realtimeData.flow_byts_s_history || [],
         backgroundColor: "#f5365c",
         borderColor: "#f5365c",
         borderWidth: 1,
@@ -136,6 +136,7 @@ const RealtimeMonitoring = () => {
               <CardBody>
                 {socketConnected ? (
                   <>
+                    {/* Hiển thị các thông số chính */}
                     <Row className="mb-4">
                       <Col xl="3">
                         <Card className="card-stats">
@@ -149,7 +150,7 @@ const RealtimeMonitoring = () => {
                                   Packets/s
                                 </CardTitle>
                                 <span className="h2 font-weight-bold mb-0">
-                                  {realtimeData.flow_pkts_s.toFixed(2)}
+                                  {realtimeData.flow_pkts_s?.toFixed(2) || 0}
                                 </span>
                               </div>
                               <Col className="col-auto">
@@ -173,7 +174,7 @@ const RealtimeMonitoring = () => {
                                   Bytes/s
                                 </CardTitle>
                                 <span className="h2 font-weight-bold mb-0">
-                                  {realtimeData.flow_byts_s.toFixed(2)}
+                                  {realtimeData.flow_byts_s?.toFixed(2) || 0}
                                 </span>
                               </div>
                               <Col className="col-auto">
@@ -197,7 +198,7 @@ const RealtimeMonitoring = () => {
                                   Fwd Packets
                                 </CardTitle>
                                 <span className="h2 font-weight-bold mb-0">
-                                  {realtimeData.tot_fwd_pkts}
+                                  {realtimeData.tot_fwd_pkts || 0}
                                 </span>
                               </div>
                               <Col className="col-auto">
@@ -221,7 +222,7 @@ const RealtimeMonitoring = () => {
                                   Bwd Packets
                                 </CardTitle>
                                 <span className="h2 font-weight-bold mb-0">
-                                  {realtimeData.tot_bwd_pkts}
+                                  {realtimeData.tot_bwd_pkts || 0}
                                 </span>
                               </div>
                               <Col className="col-auto">
@@ -234,6 +235,7 @@ const RealtimeMonitoring = () => {
                         </Card>
                       </Col>
                     </Row>
+                    {/* Biểu đồ luôn hiển thị */}
                     <Row className="mb-4">
                       <Col xl="6">
                         <Card className="bg-gradient-default shadow">
@@ -249,7 +251,8 @@ const RealtimeMonitoring = () => {
                                   scales: {
                                     y: {
                                       beginAtZero: true,
-                                      suggestedMax: Math.max(...(realtimeData.mse_values || [0])) * 1.2,
+                                      suggestedMax:
+                                        Math.max(...(realtimeData.mse_values || [0])) * 1.2 || 0.02,
                                       title: {
                                         display: true,
                                         text: "MSE Value",
@@ -257,7 +260,7 @@ const RealtimeMonitoring = () => {
                                       },
                                       ticks: {
                                         callback: function (value) {
-                                          return value < 10 ? value.toFixed(6) : value;
+                                          return value < 10 ? value?.toFixed(6) : value;
                                         },
                                       },
                                     },
@@ -312,18 +315,64 @@ const RealtimeMonitoring = () => {
                         </Card>
                       </Col>
                     </Row>
-                    {alertData && (
-                      <Col xl="12">
+                    {/* Phần cảnh báo */}
+                    <Col xl="12">
+                      {alertData ? (
                         <Alert color="danger" className="mt-4">
                           <h4>Alert: Attack Detected!</h4>
-                          <p><strong>Timestamp:</strong> {alertData.timestamp}</p>
-                          <p><strong>Prediction:</strong> {alertData.prediction}</p>
-                          <p><strong>Max MSE:</strong> {alertData.max_mse.toFixed(6)}</p>
-                          <p><strong>Abnormal Percentage:</strong> {alertData.abnormal_percentage.toFixed(2)}%</p>
-                          <p><strong>Duration Confirmed:</strong> {alertData.duration_confirmed} seconds</p>
+                          <p><strong>Timestamp:</strong> {alertData.timestamp || "N/A"}</p>
+                          <p><strong>Prediction:</strong> {alertData.prediction || "Unknown"}</p>
+                          <p><strong>Max MSE:</strong> {(alertData.max_mse || 0).toFixed(6)}</p>
+                          <p>
+                            <strong>Abnormal Percentage:</strong>{" "}
+                            {(alertData.abnormal_percentage || 0).toFixed(2)}%
+                          </p>
+                          <p>
+                            <strong>Duration Confirmed:</strong>{" "}
+                            {alertData.duration_confirmed || 0} seconds
+                          </p>
+                          <p><strong>Details:</strong> {alertData.details || "No additional details"}</p>
                         </Alert>
-                      </Col>
-                    )}
+                      ) : (
+                        <Alert color="success" className="mt-4">
+                          <h4>Status: Normal</h4>
+                          <p>No anomalies detected in the network traffic.</p>
+                          <p>
+                            <strong>Current MSE:</strong> {(realtimeData.max_mse || 0).toFixed(6)}
+                          </p>
+                          <p>
+                            <strong>Abnormal Percentage:</strong>{" "}
+                            {(realtimeData.abnormal_percentage || 0).toFixed(2)}%
+                          </p>
+                        </Alert>
+                      )}
+                    </Col>
+                    {/* Phần lịch sử tấn công */}
+                    <Col xl="12" className="mt-4">
+                      <Card className="shadow">
+                        <CardHeader className="border-0">
+                          <h3 className="mb-0">Attack History</h3>
+                        </CardHeader>
+                        <CardBody>
+                          {realtimeData.attack_history.length > 0 ? (
+                            <ul className="list-unstyled">
+                              {realtimeData.attack_history.map((attack, index) => (
+                                <li key={index} className="mb-2">
+                                  <strong>{attack.timestamp}</strong>: {attack.prediction} 
+                                  (MSE: {(attack.max_mse || 0).toFixed(6)}, 
+                                  Abnormal: {(attack.abnormal_percentage || 0).toFixed(2)}%, 
+                                  Duration: {attack.duration_confirmed || 0}s)
+                                  <br />
+                                  <small>{attack.details}</small>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No attacks detected yet.</p>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </Col>
                   </>
                 ) : (
                   <Alert color="warning" className="mt-4 text-center">
