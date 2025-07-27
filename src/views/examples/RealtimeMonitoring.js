@@ -8,9 +8,12 @@ import {
   Col,
   Alert,
   CardTitle,
+  Nav,
+  NavItem,
+  NavLink,
 } from "reactstrap";
 import { Line, Bar } from "react-chartjs-2";
-import { chartOptions } from "variables/charts.js";
+import classnames from "classnames";
 import io from "socket.io-client";
 
 const RealtimeMonitoring = () => {
@@ -28,6 +31,14 @@ const RealtimeMonitoring = () => {
   });
   const [alertData, setAlertData] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [activeNav, setActiveNav] = useState(1);
+  const [chartExample1Data, setChartExample1Data] = useState("data1");
+
+  const toggleNavs = (e, index) => {
+    e.preventDefault();
+    setActiveNav(index);
+    setChartExample1Data(index === 1 ? "data1" : "data2");
+  };
 
   useEffect(() => {
     const socket = io("http://192.168.11.132:5000");
@@ -78,45 +89,102 @@ const RealtimeMonitoring = () => {
     };
   }, []);
 
-  // Dữ liệu cho biểu đồ Line (mse_values) với đường ngưỡng
-  const mseChartData = {
-    labels: realtimeData.mse_values?.map((_, index) => `Point ${index + 1}`) || [],
-    datasets: [
-      {
-        label: "MSE Values",
-        data: realtimeData.mse_values || [],
-        fill: false,
-        borderColor: "#5e72e4",
-        borderWidth: 2,
-        tension: 0.6,
-        pointRadius: 0,
+  const chartExample1 = {
+    data1: {
+      labels: (realtimeData.mse_values?.slice(-30) || []).map((_, index) => `p ${index + 1}`),
+      datasets: [
+        {
+          label: "MSE Values",
+          data: realtimeData.mse_values?.slice(-30) || [],
+          fill: false,
+          borderColor: "#ff0000",
+          borderWidth: 2,
+          tension: 0.6,
+          pointRadius: 0,
+        },
+        {
+          label: "Threshold",
+          data: Array(Math.min(realtimeData.mse_values?.length || 0, 30)).fill(0.011),
+          fill: false,
+          borderColor: "#5e72e4",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+        },
+      ],
+    },
+    data2: {
+      labels: (realtimeData.mse_values?.slice(-7) || []).map((_, index) => `Point ${index + 1}`),
+      datasets: [
+        {
+          label: "MSE Values",
+          data: realtimeData.mse_values?.slice(-7) || [],
+          fill: false,
+          borderColor: "#ff0000",
+          borderWidth: 2,
+          tension: 0.6,
+          pointRadius: 0,
+        },
+        {
+          label: "Threshold",
+          data: Array(Math.min(realtimeData.mse_values?.length || 0, 7)).fill(0.011),
+          fill: false,
+          borderColor: "#5e72e4",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax:
+            Math.max(...(realtimeData.mse_values?.slice(-30) || [0])) * 1.2 || 0.02,
+          title: {
+            display: true,
+            text: "MSE Value",
+            color: "#fff",
+          },
+          ticks: {
+            callback: function (value) {
+              return value < 10 ? value?.toFixed(6) : value;
+            },
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: "Data Points",
+            color: "#fff",
+          },
+        },
       },
-      {
-        label: "Threshold",
-        data: Array(realtimeData.mse_values?.length).fill(0.5),
-        fill: false,
-        borderColor: "#ff0000",
-        borderWidth: 2,
-        borderDash: [5, 5],
-        pointRadius: 0,
+      plugins: {
+        legend: {
+          labels: {
+            color: "#fff",
+          },
+        },
       },
-    ],
+    },
   };
 
-  // Dữ liệu cho biểu đồ Bar (flow_pkts_s và flow_byts_s history)
   const trafficChartData = {
-    labels: realtimeData.flow_pkts_s_history?.map((_, index) => `T${index + 1}`) || [],
+    labels: (realtimeData.flow_pkts_s_history?.slice(-15) || []).map((_, index) => `T${index + 1}`),
     datasets: [
       {
         label: "Packets/s",
-        data: realtimeData.flow_pkts_s_history || [],
+        data: realtimeData.flow_pkts_s_history?.slice(-15) || [],
         backgroundColor: "#2dce89",
         borderColor: "#2dce89",
         borderWidth: 1,
       },
       {
         label: "Bytes/s",
-        data: realtimeData.flow_byts_s_history || [],
+        data: realtimeData.flow_byts_s_history?.slice(-15) || [],
         backgroundColor: "#f5365c",
         borderColor: "#f5365c",
         borderWidth: 1,
@@ -136,7 +204,6 @@ const RealtimeMonitoring = () => {
               <CardBody>
                 {socketConnected ? (
                   <>
-                    {/* Hiển thị các thông số chính */}
                     <Row className="mb-4">
                       <Col xl="3">
                         <Card className="card-stats">
@@ -235,67 +302,78 @@ const RealtimeMonitoring = () => {
                         </Card>
                       </Col>
                     </Row>
-                    {/* Biểu đồ luôn hiển thị */}
                     <Row className="mb-4">
-                      <Col xl="6">
+                      <Col className="mb-5 mb-xl-0" xl="7">
                         <Card className="bg-gradient-default shadow">
                           <CardHeader className="bg-transparent">
-                            <h2 className="text-white mb-0">MSE Values</h2>
+                            <Row className="align-items-center">
+                              <div className="col">
+                                <h6 className="text-uppercase text-light ls-1 mb-1">
+                                  MSE Overview
+                                </h6>
+                                <h2 className="text-white mb-0">MSE Value</h2>
+                              </div>
+                              <div className="col">
+                                <Nav className="justify-content-end" pills>
+                                  <NavItem>
+                                    <NavLink
+                                      className={classnames("py-2 px-3", {
+                                        active: activeNav === 1,
+                                      })}
+                                      href="#pablo"
+                                      onClick={(e) => toggleNavs(e, 1)}
+                                    >
+                                      <span className="d-none d-md-block">All Points</span>
+                                      <span className="d-md-none">A</span>
+                                    </NavLink>
+                                  </NavItem>
+                                  <NavItem>
+                                    <NavLink
+                                      className={classnames("py-2 px-3", {
+                                        active: activeNav === 2,
+                                      })}
+                                      data-toggle="tab"
+                                      href="#pablo"
+                                      onClick={(e) => toggleNavs(e, 2)}
+                                    >
+                                      <span className="d-none d-md-block">Last 7 Points</span>
+                                      <span className="d-md-none">7</span>
+                                    </NavLink>
+                                  </NavItem>
+                                </Nav>
+                              </div>
+                            </Row>
                           </CardHeader>
                           <CardBody>
-                            <div className="chart">
+                            <div className="chart" style={{ maxHeight: "250px", overflow: "hidden" }}>
                               <Line
-                                data={mseChartData}
-                                options={{
-                                  ...chartOptions,
-                                  scales: {
-                                    y: {
-                                      beginAtZero: true,
-                                      suggestedMax:
-                                        Math.max(...(realtimeData.mse_values || [0])) * 1.2 || 0.02,
-                                      title: {
-                                        display: true,
-                                        text: "MSE Value",
-                                        color: "#fff",
-                                      },
-                                      ticks: {
-                                        callback: function (value) {
-                                          return value < 10 ? value?.toFixed(6) : value;
-                                        },
-                                      },
-                                    },
-                                    x: {
-                                      title: {
-                                        display: true,
-                                        text: "Data Points",
-                                        color: "#fff",
-                                      },
-                                    },
-                                  },
-                                  plugins: {
-                                    legend: {
-                                      labels: {
-                                        color: "#fff",
-                                      },
-                                    },
-                                  },
-                                }}
+                                data={chartExample1[chartExample1Data]}
+                                options={chartExample1.options}
+                                getDatasetAtEvent={(e) => console.log(e)}
+                                height={250}
                               />
                             </div>
                           </CardBody>
                         </Card>
                       </Col>
-                      <Col xl="6">
+                      <Col xl="5">
                         <Card className="shadow">
                           <CardHeader className="bg-transparent">
-                            <h2 className="mb-0">Traffic History</h2>
+                            <Row className="align-items-center">
+                              <div className="col">
+                                <h6 className="text-uppercase text-muted ls-1 mb-1">
+                                  Performance
+                                </h6>
+                                <h2 className="mb-0">Traffic History</h2>
+                              </div>
+                            </Row>
                           </CardHeader>
                           <CardBody>
-                            <div className="chart">
+                            <div className="chart" style={{ maxHeight: "250px", overflow: "hidden" }}>
                               <Bar
                                 data={trafficChartData}
                                 options={{
-                                  ...chartOptions,
+                                  maintainAspectRatio: false,
                                   scales: {
                                     y: {
                                       beginAtZero: true,
@@ -309,13 +387,13 @@ const RealtimeMonitoring = () => {
                                     },
                                   },
                                 }}
+                                height={250}
                               />
                             </div>
                           </CardBody>
                         </Card>
                       </Col>
                     </Row>
-                    {/* Phần cảnh báo */}
                     <Col xl="12">
                       {alertData ? (
                         <Alert color="danger" className="mt-4">
@@ -347,7 +425,6 @@ const RealtimeMonitoring = () => {
                         </Alert>
                       )}
                     </Col>
-                    {/* Phần lịch sử tấn công */}
                     <Col xl="12" className="mt-4">
                       <Card className="shadow">
                         <CardHeader className="border-0">
