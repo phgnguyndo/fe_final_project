@@ -60,9 +60,10 @@ const Sidebar = (props) => {
             to={prop.layout + prop.path}
             tag={NavLinkRRD}
             onClick={closeCollapse}
+            style={collapsed ? { justifyContent: 'center' } : {}}
           >
-            <i className={prop.icon} />
-            {prop.name}
+            <i className={prop.icon} style={{ fontSize: '1.25rem', minWidth: 24, textAlign: 'center' }} />
+            {!collapsed && <span style={{ marginLeft: 12 }}>{prop.name}</span>}
           </NavLink>
         </NavItem>
       );
