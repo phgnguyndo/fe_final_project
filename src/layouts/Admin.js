@@ -12,6 +12,8 @@ import routes from "routes.js";
 const Admin = (props) => {
   const mainContent = React.useRef(null);
   const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const toggleSidebar = () => setSidebarCollapsed((prev) => !prev);
 
   React.useEffect(() => {
     document.documentElement.scrollTop = 0;
@@ -53,11 +55,14 @@ const Admin = (props) => {
           imgSrc: require("../assets/img/brand/argon-react.png"),
           imgAlt: "...",
         }}
+        collapsed={sidebarCollapsed}
       />
-      <div className="main-content" ref={mainContent}>
+      <div className={`main-content${sidebarCollapsed ? ' sidebar-collapsed' : ''}`} ref={mainContent}>
         <AdminNavbar
           {...props}
           brandText={getBrandText(props?.location?.pathname)}
+          sidebarCollapsed={sidebarCollapsed}
+          toggleSidebar={toggleSidebar}
         />
         <Routes>
           {getRoutes(routes)}

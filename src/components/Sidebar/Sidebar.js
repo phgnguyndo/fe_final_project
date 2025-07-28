@@ -37,6 +37,7 @@ import {
 var ps;
 
 const Sidebar = (props) => {
+  const { bgColor, routes, logo, collapsed } = props;
   const [collapseOpen, setCollapseOpen] = useState();
   // verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
@@ -68,7 +69,6 @@ const Sidebar = (props) => {
     });
   };
 
-  const { bgColor, routes, logo } = props;
   let navbarBrandProps;
   if (logo && logo.innerLink) {
     navbarBrandProps = {
@@ -84,9 +84,10 @@ const Sidebar = (props) => {
 
   return (
     <Navbar
-      className="navbar-vertical fixed-left navbar-light bg-white"
+      className={`navbar-vertical fixed-left navbar-light bg-white${collapsed ? ' sidebar-collapsed' : ''}`}
       expand="md"
       id="sidenav-main"
+      style={collapsed ? {maxWidth: '60px', minWidth: '60px', width: '60px', transition: 'all 0.2s'} : {maxWidth: '250px', minWidth: '250px', width: '250px', transition: 'all 0.2s'}}
     >
       <Container fluid>
         {/* Toggler */}
@@ -104,6 +105,7 @@ const Sidebar = (props) => {
               alt={logo.imgAlt}
               className="navbar-brand-img"
               src={logo.imgSrc}
+              style={collapsed ? {width: '30px', transition: 'all 0.2s'} : {width: '100%', transition: 'all 0.2s'}}
             />
           </NavbarBrand>
         ) : null}

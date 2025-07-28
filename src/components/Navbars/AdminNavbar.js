@@ -44,6 +44,14 @@ const AdminNavbar = (props) => {
     <>
       <Navbar className="navbar-top navbar-dark" expand="md" id="navbar-main">
         <Container fluid>
+          <button
+            className="btn btn-link text-white mr-3"
+            style={{fontSize: '1.5rem'}}
+            onClick={props.toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <i className="fas fa-bars" />
+          </button>
           <Link
             className="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block"
             to="/"

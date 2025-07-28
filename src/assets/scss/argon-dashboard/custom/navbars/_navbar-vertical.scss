@@ -284,3 +284,28 @@
         }
     }
 }
+
+.navbar-vertical.sidebar-collapsed {
+  max-width: 60px !important;
+  min-width: 60px !important;
+  width: 60px !important;
+  transition: all 0.2s;
+  .navbar-brand-img,
+  .navbar-brand > img {
+    width: 30px !important;
+    transition: all 0.2s;
+  }
+  .nav-link span,
+  .navbar-brand span,
+  .collapse,
+  .navbar-collapse,
+  .navbar-collapse-header,
+  .navbar-nav .nav-link > span {
+    display: none !important;
+  }
+  .nav-link {
+    text-align: center;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
