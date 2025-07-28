@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import classnames from "classnames";
-import { Line, Bar } from "react-chartjs-2";
+import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Button,
   Card,
@@ -19,6 +19,7 @@ import {
 } from "reactstrap";
 import io from "socket.io-client";
 import Header from "components/Headers/Header.js";
+import axiosInstance from '../api/axios'
 
 const RealtimeMonitoring = () => {
   const [realtimeData, setRealtimeData] = useState({
@@ -37,6 +38,19 @@ const RealtimeMonitoring = () => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [activeNav, setActiveNav] = useState(1);
   const [chartExample1Data, setChartExample1Data] = useState("data1");
+  const [detectData, setDetectData] = useState([]);
+
+  useEffect(() => {
+    const fetchDetectData = async () => {
+      try {
+        const response = await axiosInstance.get('/api/detect');
+        setDetectData(response.data || []);  // Giả sử response trả {data: [...]}
+      } catch (error) {
+        console.error("Error fetching detect data:", error);
+      }
+    };
+    fetchDetectData();
+  }, []);
 
   const toggleNavs = (e, index) => {
     e.preventDefault();
@@ -95,7 +109,7 @@ const RealtimeMonitoring = () => {
 
   const chartExample1 = {
     data1: {
-      labels: (realtimeData.mse_values?.slice(-30) || []).map((_, index) => `Point ${index + 1}`),
+      labels: (realtimeData.mse_values?.slice(-30) || []).map((_, index) => `p${index + 1}`),
       datasets: [
         {
           label: "MSE Values",
@@ -108,7 +122,7 @@ const RealtimeMonitoring = () => {
         },
         {
           label: "Threshold",
-          data: Array(Math.min(realtimeData.mse_values?.length || 0, 30)).fill(0.011),
+          data: Array(Math.min(realtimeData.mse_values?.length || 0, 30)).fill(0.6),
           fill: false,
           borderColor: "#5e72e4",
           borderWidth: 2,
@@ -213,6 +227,39 @@ const RealtimeMonitoring = () => {
         legend: {
           labels: {
             color: "#333",
+          },
+        },
+      },
+    },
+  };
+
+  const pieChartData = {
+    labels: ["Normal", "Abnormal"],
+    datasets: [
+      {
+        data: [
+          (100 - (realtimeData.abnormal_percentage || 0)).toFixed(2),
+          (realtimeData.abnormal_percentage || 0).toFixed(2),
+        ],
+        backgroundColor: ["#2dce89", "#f5365c"],
+        hoverBackgroundColor: ["#2dce89", "#f5365c"],
+      },
+    ],
+  };
+
+  const pieChartOptions = {
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#333",
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return `${context.label}: ${context.raw}%`;
           },
         },
       },
@@ -334,7 +381,7 @@ const RealtimeMonitoring = () => {
               <CardHeader className="border-0">
                 <Row className="align-items-center">
                   <div className="col">
-                    <h3 className="mb-0">Page visits</h3>
+                    <h3 className="mb-0">Detect History</h3>
                   </div>
                   <div className="col text-right">
                     <Button
@@ -349,60 +396,37 @@ const RealtimeMonitoring = () => {
                 </Row>
               </CardHeader>
               <Table className="align-items-center table-flush" responsive>
-                <thead className="thead-light">
-                  <tr>
-                    <th scope="col">Page name</th>
-                    <th scope="col">Visitors</th>
-                    <th scope="col">Unique users</th>
-                    <th scope="col">Bounce rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">/argon/</th>
-                    <td>4,569</td>
-                    <td>340</td>
-                    <td>
-                      <i className="fas fa-arrow-up text-success mr-3" /> 46,53%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">/argon/index.html</th>
-                    <td>3,985</td>
-                    <td>319</td>
-                    <td>
-                      <i className="fas fa-arrow-down text-warning mr-3" />{" "}
-                      46,53%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">/argon/charts.html</th>
-                    <td>3,513</td>
-                    <td>294</td>
-                    <td>
-                      <i className="fas fa-arrow-down text-warning mr-3" />{" "}
-                      36,49%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">/argon/tables.html</th>
-                    <td>2,050</td>
-                    <td>147</td>
-                    <td>
-                      <i className="fas fa-arrow-up text-success mr-3" /> 50,87%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">/argon/profile.html</th>
-                    <td>1,795</td>
-                    <td>190</td>
-                    <td>
-                      <i className="fas fa-arrow-down text-danger mr-3" />{" "}
-                      46,53%
-                    </td>
-                  </tr>
-                </tbody>
-              </Table>
+                  <thead className="thead-light">
+                    <tr>
+                      <th scope="col">STT</th>
+                      <th scope="col">Timestamp</th>
+                      <th scope="col">Type Attack</th>
+                      <th scope="col">Abnormal Percent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detectData.length > 0 ? (
+                      detectData.map((item, index) => (
+                        <tr key={index}>
+                          <td>{index + 1}</td>
+                          <th scope="row">{item.timeStamp || 'N/A'}</th>
+                          <td>{item.typeAttack || 'Unknown'}</td>
+                          <td>
+                            <i className={classnames("fas mr-3", {
+                              "fa-arrow-up text-danger": item.abNormarPercent > 50,
+                              "fa-arrow-down text-success": item.abNormarPercent <= 50,
+                            })} />
+                            {(item.abNormarPercent || 0).toFixed(2)}%
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4">No data available</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
             </Card>
           </Col>
           <Col xl="4">
@@ -410,107 +434,19 @@ const RealtimeMonitoring = () => {
               <CardHeader className="border-0">
                 <Row className="align-items-center">
                   <div className="col">
-                    <h3 className="mb-0">Social traffic</h3>
-                  </div>
-                  <div className="col text-right">
-                    <Button
-                      color="primary"
-                      href="#pablo"
-                      onClick={(e) => e.preventDefault()}
-                      size="sm"
-                    >
-                      See all
-                    </Button>
+                    <h3 className="mb-0">Normal vs Abnormal</h3>
                   </div>
                 </Row>
               </CardHeader>
-              <Table className="align-items-center table-flush" responsive>
-                <thead className="thead-light">
-                  <tr>
-                    <th scope="col">Referral</th>
-                    <th scope="col">Visitors</th>
-                    <th scope="col" />
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">Facebook</th>
-                    <td>1,480</td>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">60%</span>
-                        <div>
-                          <Progress
-                            max="100"
-                            value="60"
-                            barClassName="bg-gradient-danger"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Facebook</th>
-                    <td>5,480</td>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">70%</span>
-                        <div>
-                          <Progress
-                            max="100"
-                            value="70"
-                            barClassName="bg-gradient-success"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Google</th>
-                    <td>4,807</td>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">80%</span>
-                        <div>
-                          <Progress max="100" value="80" />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Instagram</th>
-                    <td>3,678</td>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">75%</span>
-                        <div>
-                          <Progress
-                            max="100"
-                            value="75"
-                            barClassName="bg-gradient-info"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">twitter</th>
-                    <td>2,645</td>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <span className="mr-2">30%</span>
-                        <div>
-                          <Progress
-                            max="100"
-                            value="30"
-                            barClassName="bg-gradient-warning"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </Table>
+              <CardBody>
+                <div className="chart" style={{ height: "250px" }}>
+                  <Pie
+                    data={pieChartData}
+                    options={pieChartOptions}
+                    height={250}
+                  />
+                </div>
+              </CardBody>
             </Card>
           </Col>
         </Row>
@@ -546,7 +482,7 @@ const RealtimeMonitoring = () => {
               </Alert>
             )}
           </Col>
-          <Col xl="12">
+          {/* <Col xl="12">
             <Card className="shadow">
               <CardHeader className="border-0">
                 <h3 className="mb-0">Attack History</h3>
@@ -570,7 +506,7 @@ const RealtimeMonitoring = () => {
                 )}
               </CardBody>
             </Card>
-          </Col>
+          </Col> */}
         </Row>
       </Container>
     </>
