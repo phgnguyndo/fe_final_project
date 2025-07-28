@@ -109,7 +109,7 @@ const RealtimeMonitoring = () => {
 
   const chartExample1 = {
     data1: {
-      labels: (realtimeData.mse_values?.slice(-30) || []).map((_, index) => `p${index + 1}`),
+      labels: (realtimeData.mse_values?.slice(-30) || []).map((_, index) => `Point ${index + 1}`),
       datasets: [
         {
           label: "MSE Values",
@@ -450,65 +450,22 @@ const RealtimeMonitoring = () => {
             </Card>
           </Col>
         </Row>
-        <Row className="mt-5">
-          <Col xl="12">
-            {alertData ? (
-              <Alert color="danger" className="mt-4">
-                <h4>Alert: Attack Detected!</h4>
-                <p><strong>Timestamp:</strong> {alertData.timestamp || "N/A"}</p>
-                <p><strong>Prediction:</strong> {alertData.prediction || "Unknown"}</p>
-                <p><strong>Max MSE:</strong> {(alertData.max_mse || 0).toFixed(6)}</p>
-                <p>
-                  <strong>Abnormal Percentage:</strong>{" "}
-                  {(alertData.abnormal_percentage || 0).toFixed(2)}%
-                </p>
-                <p>
-                  <strong>Duration Confirmed:</strong>{" "}
-                  {alertData.duration_confirmed || 0} seconds
-                </p>
-                <p><strong>Details:</strong> {alertData.details || "No additional details"}</p>
-              </Alert>
-            ) : (
-              <Alert color="success" className="mt-4">
-                <h4>Status: Normal</h4>
-                <p>No anomalies detected in the network traffic.</p>
-                <p>
-                  <strong>Current MSE:</strong> {(realtimeData.max_mse || 0).toFixed(6)}
-                </p>
-                <p>
-                  <strong>Abnormal Percentage:</strong>{" "}
-                  {(realtimeData.abnormal_percentage || 0).toFixed(2)}%
-                </p>
-              </Alert>
-            )}
-          </Col>
-          {/* <Col xl="12">
-            <Card className="shadow">
-              <CardHeader className="border-0">
-                <h3 className="mb-0">Attack History</h3>
-              </CardHeader>
-              <CardBody>
-                {realtimeData.attack_history.length > 0 ? (
-                  <ul className="list-unstyled">
-                    {realtimeData.attack_history.map((attack, index) => (
-                      <li key={index} className="mb-2">
-                        <strong>{attack.timestamp}</strong>: {attack.prediction} 
-                        (MSE: {(attack.max_mse || 0).toFixed(6)}, 
-                        Abnormal: {(attack.abnormal_percentage || 0).toFixed(2)}%, 
-                        Duration: {attack.duration_confirmed || 0}s)
-                        <br />
-                        <small>{attack.details}</small>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No attacks detected yet.</p>
-                )}
-              </CardBody>
-            </Card>
-          </Col> */}
-        </Row>
       </Container>
+      {alertData && (
+        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1050, width: '300px' }}>
+          <Alert color="danger">
+            <h4>Alert: Attack Detected!</h4>
+            <p><strong>Timestamp:</strong> {alertData.timestamp || "N/A"}</p>
+            <p><strong>Prediction:</strong> {alertData.prediction || "Unknown"}</p>
+            <p><strong>Max MSE:</strong> {(alertData.max_mse || 0).toFixed(6)}</p>
+            <p>
+              <strong>Abnormal Percentage:</strong>{" "}
+              {(alertData.abnormal_percentage || 0).toFixed(2)}%
+            </p>
+            <p><strong>Details:</strong> {alertData.details || "No additional details"}</p>
+          </Alert>
+        </div>
+      )}
     </>
   );
 };
