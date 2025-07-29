@@ -82,12 +82,12 @@ var routes = [
     component: <Upload/>,
     layout: "/admin",
   },
-  {
-    path: "/admin/realtime",
-    name: "Realtime Monitoring",
-    icon: "ni ni-chart-bar-32 text-primary",
-    component: <RealtimeMonitoring/>,
-    layout: "/admin",
-  },
+  // {
+  //   path: "/admin/realtime",
+  //   name: "Realtime Monitoring",
+  //   icon: "ni ni-chart-bar-32 text-primary",
+  //   component: <RealtimeMonitoring/>,
+  //   layout: "/admin",
+  // },
 ];
 export default routes;

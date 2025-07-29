@@ -105,7 +105,7 @@ const Upload = () => {
 
   return (
     <>
-      <div className="header bg-gradient-info pb-8 pt-5 pt-md-8">
+      <div className="header pb-8 pt-4 pt-md-7" style={{ background: 'linear-gradient(87deg, #F1F2B5 -20%, #135058 100%)' }}>
         <Container fluid>
           <div className="header-body">
             <Row>
