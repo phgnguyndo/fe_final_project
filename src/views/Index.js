@@ -241,8 +241,8 @@ const RealtimeMonitoring = () => {
           (100 - (realtimeData.abnormal_percentage || 0)).toFixed(2),
           (realtimeData.abnormal_percentage || 0).toFixed(2),
         ],
-        backgroundColor: ["#2dce89", "#f5365c"],
-        hoverBackgroundColor: ["#2dce89", "#f5365c"],
+        backgroundColor: ["#C3D1A2", "#f5365c"],
+        hoverBackgroundColor: ["#C3D1A2", "#f5365c"],
       },
     ],
   };
@@ -462,7 +462,6 @@ const RealtimeMonitoring = () => {
               <strong>Abnormal Percentage:</strong>{" "}
               {(alertData.abnormal_percentage || 0).toFixed(2)}%
             </p>
-            <p><strong>Details:</strong> {alertData.details || "No additional details"}</p>
           </Alert>
         </div>
       )}
