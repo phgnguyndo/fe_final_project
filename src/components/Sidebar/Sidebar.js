@@ -106,7 +106,7 @@ const Sidebar = (props) => {
               alt={logo.imgAlt}
               className="navbar-brand-img"
               src={logo.imgSrc}
-              style={collapsed ? {width: '30px', transition: 'all 0.2s'} : {width: '100%', transition: 'all 0.2s'}}
+              style={collapsed ? {width: '30px', transition: 'all 0.2s', objectFit: 'contain'} : {width: '85%', transition: 'all 0.2s'}}
             />
           </NavbarBrand>
         ) : null}
